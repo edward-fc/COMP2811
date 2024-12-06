@@ -69,3 +69,26 @@ std::pair<double, double> findResultRange(const Records& records) {
 
     return {minResult, maxResult};
 }
+// Make a SQL query to the database
+Records SQL_Database(std::string sql) {
+    Records results;
+    QSqlDatabase db = QSqlDatabase::database();
+    if (!db.isValid() || !db.isOpen()) {
+        qWarning() << "Database is not open or valid!";
+        return results;
+    }
+    QSqlQuery query(QString::fromStdString(sql));
+    if (!query.exec()) {
+        qWarning() << "Database query failed:" << query.lastError().text();
+        return results;
+    }
+    while (query.next()) {
+        Record record;
+        for (int i = 0; i < query.record().count(); ++i) {
+            QString columnName = query.record().fieldName(i);
+            record[columnName] = query.value(i);
+        }
+        results.append(record);
+    }
+    return results;
+}
